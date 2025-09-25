@@ -14,4 +14,4 @@ billing_records = db.collection("billing_records")
 
 class User(BaseModel):
     email: str = Field(..., unique=True)
-    API_key: str
+    key: str
