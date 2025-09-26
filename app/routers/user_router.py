@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.db.models import User, UserPublic
 from app.db.collections import users
-from app.core.security import get_current_user
+from app.security import get_current_user
 from app.db.resources import ResourcePool
 
 router = APIRouter(tags=["users"])
@@ -24,7 +24,7 @@ async def create_user(email: str):
 @router.delete("/users/", status_code=204)
 async def delete_user(user: UserPublic = Depends(get_current_user)):
     await users.delete_one({"email": user.email})
-    return None
+    return {"message": "User deleted successfully"}
 
 
 @router.get("/users/current_bill", response_model=float, status_code=200)

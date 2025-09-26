@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.db.models import ContainerSettings, UserPublic, Container
 from app.db.collections import users, containers_db
-from app.core.security import get_current_user
+from app.security import get_current_user
 from app.db.resources import ResourcePool
 
 router = APIRouter(tags=["containers"])
