@@ -1,26 +1,35 @@
 from pydantic import BaseModel, Field, EmailStr
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, UTC, timezone
 import secrets
 from app.config import settings
-from app.db.resources import ResourcePool
 from typing import List
-
+from app.db.collections import containers_db
 
 
 class UserPublic(BaseModel):
     email: str
-    global_bill: int = 0
+    global_bill: float = 0
     containers: List[str] = []
 
     # Check how much user should be billed up to now
-    async def get_current_billing(self) -> int:
-        containers = await Container.find_many({"owner_email": self.email})
-        return [await container.get_current_billing(self) for container in containers][-1] if containers else self.global_bill
-
+    async def get_current_billing(self) -> float:
+        total_bill = 0
+        cursor = containers_db.find({"owner_email": self.email})
+        async for container_doc in cursor:
+            container = Container(**container_doc)
+            total_bill += await container.get_current_billing(self)
+        self.global_bill = 0
+        return total_bill
+    
     #"reset" the billing time after user has been billed and return the amount to be billed
-    async def paycheck(self) -> None:
-        containers = await Container.find_many({"owner_email": self.email})
-        return [await container.paycheck(self) for container in containers][-1] if containers else self.global_bill
+    async def paycheck(self) -> float:
+        total_bill = 0
+        cursor = containers_db.find({"owner_email": self.email})
+        async for container_doc in cursor:
+            container = Container(**container_doc)
+            total_bill += await container.paycheck(self)
+        self.global_bill = 0
+        return total_bill
 
 
 class User(UserPublic):
@@ -46,7 +55,7 @@ class Container(BaseModel):
         if self.status != "running":
             return user.global_bill
         now = datetime.now(UTC)
-        time_diff = now - self.last_billed
+        time_diff = now - self.last_billed.astimezone(timezone.utc)
         total_time = int(time_diff.total_seconds())
         
         user.global_bill += float(

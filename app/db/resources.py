@@ -8,8 +8,6 @@ class ResourcePool(BaseModel):
     memory: float
     gpu: int
 
-
-
     async def save(self):
         from app.db.collections import resources
         await resources.update_one({"id": self.id}, {"$set": self.model_dump()}, upsert=True)
@@ -47,6 +45,8 @@ class ResourcePool(BaseModel):
         self.memory -= memory
         if gpu is not None:
             self.gpu -= gpu
+
+        await self.save()
         logger.info(f"Created container for {owner_email} with CPU: {cpu}, Memory: {memory}, GPU: {gpu or 0}. Available resources - CPU: {self.cpu}, Memory: {self.memory}, GPU: {self.gpu}")
 
 
@@ -59,10 +59,9 @@ class ResourcePool(BaseModel):
     
 
     async def delete_container(self, settings: 'ContainerSettings') -> None:
-        from app.db.models import ContainerSettings
 
         self.cpu += settings.cpu
         self.memory += settings.memory
         self.gpu += settings.gpu
-        logger.info(f"Deleted container with settings: {settings}. Available resources - CPU: {self.cpu}, Memory: {self.memory}, GPU: {self.gpu}")
+        logger.info(f"Deleted container with settis: {settings}. Available resources - CPU: {self.cpu}, Memory: {self.memory}, GPU: {self.gpu}")
 

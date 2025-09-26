@@ -6,6 +6,6 @@ client = AsyncIOMotorClient(settings.MONGODB_URL)
 db = client[settings.MONGODB_DATABASE]
 
 users = db["users"]
-containers = db["containers"]
+containers_db = db["containers"]
 billing_records = db["billing_records"]
 resources = db["resources"]
